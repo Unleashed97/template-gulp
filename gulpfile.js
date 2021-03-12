@@ -10,6 +10,7 @@ const del = require('del');
 const concat = require('gulp-concat')
 const uglify = require('gulp-uglify');
 const autoPrefixer = require('gulp-autoprefixer');
+const imagemin = require('gulp-imagemin');
 const browserSync = require('browser-sync').create();
 
 // PATHS
@@ -112,6 +113,7 @@ const js = () => {
 
 const images = () => {
     return src(path.src.images)
+        .pipe(imagemin())
         .pipe(dest(path.build.images))
         .pipe(browserSync.reload({stream: true}));
 }

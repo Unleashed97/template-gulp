@@ -1,3 +1,3 @@
-# template-gulp
+# template-mpa
 
-HTML, SCSS, JS, GULP,
+HTML, SCSS, JS, GULP

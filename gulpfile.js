@@ -1,3 +1,5 @@
+'use strict';
+
 const { src, dest } = require('gulp');
 const gulp = require('gulp');
 const htmlmin = require('gulp-htmlmin');
@@ -146,7 +148,7 @@ exports.html = html;
 exports.css = css;
 exports.js = js;
 // exports.copy = copy;
-exports.imamges = images;
+exports.images = images;
 exports.fonts = fonts;
 exports.clean = clean;
 exports.build = build;

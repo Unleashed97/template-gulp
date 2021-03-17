@@ -5,7 +5,7 @@ const gulp = require('gulp');
 const htmlmin = require('gulp-htmlmin');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
-const cssnano = require('gulp-cssnano');
+const cleancss = require('gulp-clean-css');
 const rename = require('gulp-rename');
 const panini = require('panini');
 const del = require('del');
@@ -59,51 +59,45 @@ const browser = () => {
 // HTML
 const html = () => {
     panini.refresh();
-    return src(path.src.html, {base: srcPath})
+    return src(path.src.html)
         .pipe(panini({
             root:       srcPath,
             layouts:    srcPath + 'layouts/',
             partials:   srcPath + 'partials/',
+        }))
+        .pipe(htmlmin({
+            removeComments: true,
+            collapseWhitespace: true
         }))
         .pipe(dest(path.build.html))
         .pipe(browserSync.reload({stream: true}));
 };
 
 // CSS
-const css = () => {
-    return src(path.src.css, {base: srcPath + "scss/"})
-        // .pipe(autoPrefixer("last 2 version", "> 1%", "ie 8", "ie 7"))
-        .pipe(sass({
-            outputStyle: 'compressed',
-            includePaths: './node_modules/'
-        }))
-        .pipe(autoprefixer({
-            overrideBrowserslist: ['last 2 versions', '> 0.5%'],
-            cascade: true
-        }))
-        .pipe(cssnano({
-            zindex: false,
-            discardComments: {
-                removeAll: true
-            }
-        }))
+const styles = () => {
+    return src('src/scss/main.scss')
+        .pipe(sass())
+        .pipe(autoprefixer({ overrideBrowserslist: ['last 10 versions'], cascade: false }))
+        .pipe(cleancss(({ level: { 1: { specialComments: 0}}})))
         .pipe(rename({
-            suffix: '.min',
-            extname: '.css'
+            basename: 'style',
+            suffix: '.min'
         }))
+        // .pipe(dest('src/css/'))
         .pipe(dest(path.build.css))
         .pipe(browserSync.reload({stream: true}));
 };
 
 // JS
-const js = () => {
+const scripts = () => {
     return src(path.src.js, {base: srcPath + 'js/'})
-        .pipe(concat('app.min.js'))
+        .pipe(concat('script.min.js'))
         .pipe(uglify())
         .pipe(dest(path.build.js))
         .pipe(browserSync.reload({stream: true}));
 }
 
+// Images minify
 const images = () => {
     return src(path.src.images)
         .pipe(newer(path.build.images))
@@ -122,6 +116,7 @@ const images = () => {
         .pipe(browserSync.reload({stream: true}));
 }
 
+// Fonts
 const fonts = () => {
     return src(path.src.fonts)
         .pipe(dest(path.build.fonts))
@@ -136,22 +131,22 @@ function clean() {
 // Watch
 function watchFiles() {
     gulp.watch([path.watch.html], html);
-    gulp.watch([path.watch.css], css);
-    gulp.watch([path.watch.js], js);
+    gulp.watch([path.watch.css], styles);
+    gulp.watch([path.watch.js, '!src/js/script.min.js'], scripts);
     gulp.watch([path.watch.images], images);
     gulp.watch([path.watch.fonts], fonts);
 }
 
-const build = gulp.series(clean, gulp.parallel(html, css, js, images, fonts));
+const build = gulp.series(clean, gulp.parallel(html, styles, scripts, images, fonts));
 const watch = gulp.parallel(build, watchFiles, browser);
 
 /* Exports Tasks */
+exports.browser = browser;
 exports.html = html;
-exports.css = css;
-exports.js = js;
+exports.styles = styles;
+exports.scripts = scripts;
 exports.images = images;
 exports.fonts = fonts;
 exports.clean = clean;
 exports.build = build;
-exports.watch = watch;
 exports.default = watch;

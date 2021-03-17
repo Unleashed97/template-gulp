@@ -13,6 +13,7 @@ const concat = require('gulp-concat')
 const uglify = require('gulp-uglify');
 const autoPrefixer = require('gulp-autoprefixer');
 const imagemin = require('gulp-imagemin');
+const newer = require('gulp-newer');
 const browserSync = require('browser-sync').create();
 
 // PATHS
@@ -41,7 +42,7 @@ const path = {
         images: srcPath + "images/**/*.{jpg,png,svg,gif,ico,webp,webmanifest,xml,json}",
         fonts:  srcPath + "fonts/**/*.{eot,woff,woff2,ttf,svg}"
     },
-    clean: "./" + distPath
+    clean: "./" + distPath + "**/*"
 }
 
 
@@ -103,19 +104,20 @@ const js = () => {
         .pipe(browserSync.reload({stream: true}));
 }
 
-// Copy images and fonts
-// const copy = () =>{
-//     return src([
-//         path.src.images,
-//         path.src.fonts
-//         ])
-//         .pipe(dest(path.build))
-//         .pipe(browserSync.reload({stream: true}));
-// }
-
 const images = () => {
     return src(path.src.images)
-        .pipe(imagemin())
+        .pipe(newer(path.build.images))
+        .pipe(imagemin([
+            imagemin.gifsicle({interlaced: true}),
+            imagemin.mozjpeg({quality: 75, progressive: true}),
+            imagemin.optipng({optimizationLevel: 5}),
+            imagemin.svgo({
+                plugins: [
+                    {removeViewBox: true},
+                    {cleanupIDs: false}
+                ]
+            })
+        ]))
         .pipe(dest(path.build.images))
         .pipe(browserSync.reload({stream: true}));
 }
@@ -125,9 +127,10 @@ const fonts = () => {
         .pipe(dest(path.build.fonts))
         .pipe(browserSync.reload({stream: true}));
 } 
+
 // clean Dist folder
 function clean() {
-    return del(path.clean);
+    return del(path.clean, { force: true});
 }
 
 // Watch
@@ -135,7 +138,6 @@ function watchFiles() {
     gulp.watch([path.watch.html], html);
     gulp.watch([path.watch.css], css);
     gulp.watch([path.watch.js], js);
-    // gulp.watch([path.watch.images, path.watch.fonts], copy);
     gulp.watch([path.watch.images], images);
     gulp.watch([path.watch.fonts], fonts);
 }
@@ -147,7 +149,6 @@ const watch = gulp.parallel(build, watchFiles, browser);
 exports.html = html;
 exports.css = css;
 exports.js = js;
-// exports.copy = copy;
 exports.images = images;
 exports.fonts = fonts;
 exports.clean = clean;
